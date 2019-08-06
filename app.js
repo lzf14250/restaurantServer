@@ -35,40 +35,17 @@ function auth(req, res, next) {
   console.log(req.session);
 
   if (!req.session.user) {
-    // if the session username doesn't exist
-
-    var authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      var err = new Error('You are not authorized!');
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      return next(err);
-    }
-
-      var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-      var user = auth[0];
-      var pass = auth[1];
-
-    if (user === 'admin' && pass === 'password') {
-      req.session.user = 'admin';
-      next();
-    } else {
-      var err = new Error('You are not authorized: Wrong Username or Password!');
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      return next(err);
-    }
-  } else {
-    // session exists
-    if (req.session.user === 'admin') {
-      next();
-    } else {
-      var err = new Error('Fake Signed Cookies');
-
-      err.status = 401;
-      return next(err);
-    }
+    var err = new Error('You are not authorized!');
+    err.status = 401;
+    return next(err);
+  }
+  else if (req.session.user === 'authenticated') {
+    next();
+  }
+  else {
+    var err = new Error('You are not authorized!');
+    err.status = 403;
+    return next(err);
   }
 }
 
@@ -85,12 +62,12 @@ app.use(session({
   store: new FileStore()
 }));
 
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
 app.use(auth);
 
 app.use(express.static(path.join(__dirname, 'public')));
-
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use('/dishes', dishRouter);
 app.use('/leaders', leaderRouter);
 app.use('/promotions', promoRouter);
