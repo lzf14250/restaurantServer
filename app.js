@@ -29,10 +29,54 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
+function auth(req, res, next) {
+  console.log(req.signedCookies);
+
+  if (!req.signedCookies.user) {
+    // if the cookie doesn't exist
+
+    var authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      var err = new Error('You are not authorized!');
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      return next(err);
+    }
+
+      var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+      var user = auth[0];
+      var pass = auth[1];
+
+    if (user === 'admin' && pass === 'password') {
+      res.cookie('user','admin', { signed: true });
+      next();
+    } else {
+      var err = new Error('You are not authorized: Wrong Username or Password!');
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      return next(err);
+    }
+  } else {
+    // cookie exists
+    if (req.signedCookies.user === 'admin') {
+      next();
+    } else {
+      var err = new Error('Fake Signed Cookies');
+
+      err.status = 401;
+      return next(err);
+    }
+  }
+}
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser('12345-67890-09876-54321'));
+
+app.use(auth);
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
