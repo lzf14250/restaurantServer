@@ -4,6 +4,14 @@ var passportLocalMongoose = require('passport-local-mongoose');
 
 var User = new Schema({
     // username and salted password auto added by passport local mongoose
+    firstname: {
+        type: String,
+        default: ''
+    },
+    lastname: {
+        type: String,
+        default: ''
+    },
     admin: {
         type: Boolean,
         default: false

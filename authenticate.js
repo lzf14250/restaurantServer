@@ -31,9 +31,11 @@ exports.jwtPassport = passport.use(new JwtStrategy(opts,
                 return done(err, false);
             }
             else if (user) {
+                // successfully authenticated
                 return done(null, user);
             }
             else {
+                // not authenticated
                 return done(null, false);
             }
         });
